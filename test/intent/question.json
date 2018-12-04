@@ -1,0 +1,11 @@
+{
+  "utterance": "what is an aardwark",
+  "intent_type": "handle_question",
+  "intent": {
+    "Question": "what is"
+  },
+  "expected_data": {
+      "__type__": "query"
+  }
+}
+
