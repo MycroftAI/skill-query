@@ -12,28 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import time
 from mycroft.messagebus.message import Message
-from mycroft import MycroftSkill, intent_handler, AdaptIntent
+from mycroft import FallbackSkill
 from threading import Lock
 
-class QuestionsAnswersSkill(MycroftSkill):
+class QuestionsAnswersSkill(FallbackSkill):
     def __init__(self):
         super().__init__()
         self.query_replies = {}     # cache of received replies
         self.query_extensions = {}  # maintains query timeout extensions
         self.lock = Lock()
+        self.waiting = True
+        self.answered = False
 
     def initialize(self):
         self.add_event('question:query.response',
                        self.handle_query_response)
-        #self.register_fallback(self.handle_question, 5)
+        self.register_fallback(self.handle_question, 5)
 
 
-    @intent_handler(AdaptIntent().require('Question'))
+    #@intent_handler(AdaptIntent().require('Question'))
     def handle_question(self, message):
         """ Send the phrase to the CommonQuerySkills and prepare for handling
             the replies.
         """
+        self.waiting = True
+        self.answered = False
         utt = message.data.get('utterance')
         self.enclosure.mouth_think()
 
@@ -46,6 +51,10 @@ class QuestionsAnswersSkill(MycroftSkill):
         self.schedule_event(self._query_timeout, 1,
                             data={'phrase': utt},
                             name='QuestionQueryTimeout')
+
+        while self.waiting:
+            time.sleep(1)
+        return self.answered
 
     def handle_query_response(self, message):
         with self.lock:
@@ -91,7 +100,6 @@ class QuestionsAnswersSkill(MycroftSkill):
             # Find response(s) with the highest confidence
             best = None
             ties = []
-            print(self.query_replies)
             if search_phrase in self.query_replies:
                 for handler in self.query_replies[search_phrase]:
                     if not best or handler['conf'] > best['conf']:
@@ -113,9 +121,11 @@ class QuestionsAnswersSkill(MycroftSkill):
                                             'phrase': search_phrase,
                                             'callback_data':
                                             best.get('callback_data')}))
+                self.answered = True
             else:
-                self.speak_dialog('noAnswer', data={'phrase': search_phrase})
-
+                #self.speak_dialog('noAnswer', data={'phrase': search_phrase})
+                self.answered = False
+            self.waiting = False
             if search_phrase in self.query_replies:
                 del self.query_replies[search_phrase]
             if search_phrase in self.query_extensions:
