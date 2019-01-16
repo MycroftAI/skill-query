@@ -52,7 +52,9 @@ class QuestionsAnswersSkill(FallbackSkill):
                             data={'phrase': utt},
                             name='QuestionQueryTimeout')
 
-        while self.waiting:
+        for i in range(5):
+            if not self.waiting:
+                break
             time.sleep(1)
         return self.answered
 
