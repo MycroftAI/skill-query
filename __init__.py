@@ -15,6 +15,7 @@ import re
 import time
 from mycroft.messagebus.message import Message
 from mycroft import FallbackSkill
+from mycroft.util import wait_while_speaking
 from threading import Lock
 
 
@@ -137,6 +138,8 @@ class QuestionsAnswersSkill(FallbackSkill):
                                             'callback_data':
                                             best.get('callback_data')}))
                 self.answered = True
+                wait_while_speaking()
+                self.enclosure.mouth_reset()
             else:
                 self.answered = False
             self.waiting = False
