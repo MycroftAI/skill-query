@@ -7,6 +7,7 @@ Negotiates handling of questions by calling all registered Common Query Skills. 
 ## Examples
 * "How tall is Abraham Lincoln?"
 * "What is an Aardwark?"
+* "Why is the sky blue?"
 
 ## Credits
 Mycroft AI (@MycroftAI)
