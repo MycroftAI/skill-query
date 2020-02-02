@@ -55,8 +55,7 @@ class QuestionsAnswersSkill(FallbackSkill):
         self.timeout_time = time.time() + 1
         self.schedule_event(self._query_timeout, 1,
                             data={'phrase': utt},
-                            name='QuestionQueryTimeout',
-                            context=message.context)
+                            name='QuestionQueryTimeout')
 
         while True:
             if not self.waiting or time.time() > self.timeout_time + 1:
@@ -80,8 +79,7 @@ class QuestionsAnswersSkill(FallbackSkill):
                 self.schedule_event(self._query_timeout,
                                     EXTENSION_TIME,
                                     data={'phrase': search_phrase},
-                                    name='QuestionQueryTimeout',
-                                    context=message.context)
+                                    name='QuestionQueryTimeout')
 
                 # TODO: Perhaps block multiple extensions?
                 if (search_phrase in self.query_extensions and
@@ -99,8 +97,7 @@ class QuestionsAnswersSkill(FallbackSkill):
                         self.cancel_scheduled_event('QuestionQueryTimeout')
                         self.schedule_event(self._query_timeout, 1,
                                             data={'phrase': search_phrase},
-                                            name='QuestionQueryTimeout',
-                                            context=message.context)
+                                            name='QuestionQueryTimeout')
             else:
                 self.log.warning('{} Answered too slowly,'
                                  'will be ignored.'.format(skill_id))
