@@ -50,12 +50,13 @@ class QuestionsAnswersSkill(FallbackSkill):
         self.query_extensions[utt] = []
         self.log.info('Searching for {}'.format(utt))
         # Send the query to anyone listening for them
-        self.bus.emit(Message('question:query', data={'phrase': utt}))
+        self.bus.emit(message.reply('question:query', data={'phrase': utt}))
 
         self.timeout_time = time.time() + 1
         self.schedule_event(self._query_timeout, 1,
                             data={'phrase': utt},
-                            name='QuestionQueryTimeout')
+                            name='QuestionQueryTimeout',
+                            context=message.context)
 
         while True:
             if not self.waiting or time.time() > self.timeout_time + 1:
@@ -79,7 +80,8 @@ class QuestionsAnswersSkill(FallbackSkill):
                 self.schedule_event(self._query_timeout,
                                     EXTENSION_TIME,
                                     data={'phrase': search_phrase},
-                                    name='QuestionQueryTimeout')
+                                    name='QuestionQueryTimeout',
+                                    context=message.context)
 
                 # TODO: Perhaps block multiple extensions?
                 if (search_phrase in self.query_extensions and
@@ -97,7 +99,8 @@ class QuestionsAnswersSkill(FallbackSkill):
                         self.cancel_scheduled_event('QuestionQueryTimeout')
                         self.schedule_event(self._query_timeout, 1,
                                             data={'phrase': search_phrase},
-                                            name='QuestionQueryTimeout')
+                                            name='QuestionQueryTimeout',
+                                            context=message.context)
             else:
                 self.log.warning('{} Answered too slowly,'
                                  'will be ignored.'.format(skill_id))
@@ -131,7 +134,7 @@ class QuestionsAnswersSkill(FallbackSkill):
                 # invoke best match
                 self.speak(best['answer'])
                 self.log.info('Handling with: ' + str(best['skill_id']))
-                self.bus.emit(Message('question:action',
+                self.bus.emit(message.reply('question:action',
                                       data={'skill_id': best['skill_id'],
                                             'phrase': search_phrase,
                                             'callback_data':
