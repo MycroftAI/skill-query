@@ -2,11 +2,11 @@ Feature: Question and Answer functionality
 
   Scenario Outline: user asks who someone is
     Given an english speaking user
-     When the user says "<who is george church>"
-     Then mycroft reply should contain "<church>"
+     When the user says "<who is a person>"
+     Then mycroft reply should contain "<person>"
 
   Examples: who questions
-    | who is george church | church |
+    | who is a person | person |
     | who is george church | church |
     | who are the foo fighters | foo |
     | who built the eiffel tower | sauvestre |
@@ -15,48 +15,46 @@ Feature: Question and Answer functionality
 
   Scenario Outline: user asks a what question
     Given an english speaking user
-     When the user says "<what is metallurgy>"
-     Then mycroft reply should contain "<metallurgy>"
+     When the user says "<what is a thing>"
+     Then mycroft reply should contain "<thing>"
 
   Examples: what questions
-    | what is metallurgy | metallurgy |
+    | what is a thing | thing |
     | what is metallurgy | metallurgy |
     | what is the melting point of aluminum | 660 |
 
   Scenario Outline: user asks when something is
     Given an english speaking user
-     When the user says "<when was alexander the great born>"
-     Then mycroft reply should contain "<356>"
+     When the user says "<when did this happen>"
+     Then mycroft reply should contain "<time>"
 
   Examples: what questions
-    | when was alexander the great born | 356 |
+    | when did this happen | time |
     | when was alexander the great born | 356 |
     | when will the sun die | billion |
-    | when is the next leap year | leap |
     | when was the last ice age | glacial |
 
   Scenario Outline: user asks where something is
    Given an english speaking user
-    When the user says "<where is morocco>"
-    Then mycroft reply should contain "<africa>"
+    When the user says "<where is a place>"
+    Then mycroft reply should contain "<place>"
 
   Examples: what questions
-    | where is morocco | africa |
+    | where is a place | place |
     | where is morocco | africa |
     | where is saturn | saturn |
     | where is the smithsonian | washington |
 
   Scenario Outline: user asks a how question
     Given an english speaking user
-     When the user says "<how tall is the eiffel tower>"
-     Then mycroft reply should contain "<1063>"
+     When the user says "<how is this a thing>"
+     Then mycroft reply should contain "<the answer>"
 
   Examples: what questions
-    | how tall is the eiffel tower | 1063 |
+    | how is this a thing | the answer |
     | how tall is the eiffel tower | 1063 |
     | how far away is the moon | distance |
     | how far is it from vienna to berlin | vienna |
-
 
   @xfail
   Scenario Outline: user asks a question mycroft can't answer
