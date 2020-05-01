@@ -28,11 +28,11 @@ Feature: Question and Answer functionality
      When the user says "<when did this happen>"
      Then mycroft reply should contain "<time>"
 
-  Examples: what questions
+  Examples: when questions
     | when did this happen | time |
     | when was alexander the great born | 356 |
     | when will the sun die | billion |
-    | when was the last ice age | glacial |
+    | when was the last ice age | after the Medieval Warm Period |
 
   Scenario Outline: user asks where something is
    Given an english speaking user
