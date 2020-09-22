@@ -9,9 +9,22 @@ Feature: Question and Answer functionality
     | who is a person | person |
     | who is george church | church |
     | who are the foo fighters | foo |
+
+  @xfail
+  Scenario Outline: who questions failing due to Wolfram API outage
+    Given an english speaking user
+     When the user says "<failing wolfram query>"
+     Then mycroft resply should contain "<expected answer>"
+
+  Examples: failing wolfram questions
+    | failing wolfram query | expected answer |
     | who built the eiffel tower | sauvestre |
     | who wrote the book outliers | gladwell |
     | who discovered helium | janssen |
+    | what is the melting point of aluminum | 660 |
+    | when was alexander the great born | 356 |
+    | when will the sun die | billion |
+
 
   Scenario Outline: user asks a what question
     Given an english speaking user
@@ -21,7 +34,6 @@ Feature: Question and Answer functionality
   Examples: what questions
     | what is a thing | thing |
     | what is metallurgy | metallurgy |
-    | what is the melting point of aluminum | 660 |
 
   Scenario Outline: user asks when something is
     Given an english speaking user
@@ -30,11 +42,10 @@ Feature: Question and Answer functionality
 
   Examples: when questions
     | when did this happen | time |
-    | when was alexander the great born | 356 |
-    | when will the sun die | billion |
     | when was the last ice age | after the Medieval Warm Period |
 
-  Scenario Outline: user asks where something is
+  @xfail
+  Scenario Outline: user asks where something is - failing due to Wolfram API outage
    Given an english speaking user
     When the user says "<where is a place>"
     Then mycroft reply should contain "<place>"
@@ -45,7 +56,8 @@ Feature: Question and Answer functionality
     | where is saturn | saturn |
     | where is the smithsonian | washington |
 
-  Scenario Outline: user asks a how question
+  @xfail
+  Scenario Outline: user asks a how question - failing due to Wolfram API outage
     Given an english speaking user
      When the user says "<how is this a thing>"
      Then mycroft reply should contain "<the answer>"
