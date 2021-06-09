@@ -31,7 +31,6 @@ Feature: Question and Answer functionality
   Examples: when questions
     | when did this happen | time |
     | when was the last ice age | after the Medieval Warm Period |
-    | when was alexander the great born | 356 |
     | when will the sun die | billion |
 
   Scenario Outline: user asks where something is
@@ -68,3 +67,4 @@ Feature: Question and Answer functionality
     | what is a timer | interval |
     | what is the drinking age in canada | 19 |
     | how hot is the sun | sun |
+    | when was alexander the great born | 356 |
