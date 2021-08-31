@@ -145,6 +145,7 @@ class QuestionsAnswersSkill(FallbackSkill):
             if search_phrase in self.query_extensions:
                 del self.query_extensions[search_phrase]
 
+        return self.answered
 
 def create_skill():
     return QuestionsAnswersSkill()
