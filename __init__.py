@@ -34,7 +34,27 @@ class QuestionsAnswersSkill(FallbackSkill):
         self.add_event('question:query.response',
                        self.handle_query_response)
         self.register_fallback(self.handle_question, 5)
+        self.qwords = [
+                'tell me ',
+                'answer ',
+                'where ',
+                'which ',
+                'what ',
+                'when ',
+                'does ',
+                'how ',
+                'why ',
+                'are ',
+                'who ',
+                'do ',
+                'is '
+                ]
 
+    def valid_question(self, utt):
+        for word in self.qwords:
+            if utt.startswith(word):
+                return True
+        return False
 
     #@intent_handler(AdaptIntent().require('Question'))
     def handle_question(self, message):
@@ -44,8 +64,11 @@ class QuestionsAnswersSkill(FallbackSkill):
         self.waiting = True
         self.answered = False
         utt = message.data.get('utterance')
-        self.enclosure.mouth_think()
 
+        if not self.valid_question(utt):
+            return False
+
+        self.enclosure.mouth_think()
         self.query_replies[utt] = []
         self.query_extensions[utt] = []
         self.log.info('Searching for {}'.format(utt))
