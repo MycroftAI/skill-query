@@ -127,7 +127,7 @@ class QuestionsAnswersSkill(FallbackSkill):
 
     def _query_timeout(self, message):
         # Prevent any late-comers from retriggering this query handler
-        with self.lock:
+        with self.lock, self.activity():
             self.log.info('Timeout occured check responses')
             search_phrase = message.data['phrase']
             if search_phrase in self.query_extensions:
@@ -152,7 +152,7 @@ class QuestionsAnswersSkill(FallbackSkill):
                     pass
 
                 # invoke best match
-                self.speak(best['answer'])
+                self.speak(best['answer'], wait=True)
                 self.log.info('Handling with: ' + str(best['skill_id']))
                 self.bus.emit(message.forward('question:action',
                                       data={'skill_id': best['skill_id'],
