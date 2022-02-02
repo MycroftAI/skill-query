@@ -151,6 +151,9 @@ class QuestionsAnswersSkill(FallbackSkill):
                     # TODO: Ask user to pick between ties or do it automagically
                     pass
 
+                self.answered = True  # Jira MYC-1131
+                self.waiting = False  # Jira MYC-1131
+
                 # invoke best match
                 self.speak(best['answer'], wait=True)
                 self.log.info('Handling with: ' + str(best['skill_id']))
@@ -159,7 +162,6 @@ class QuestionsAnswersSkill(FallbackSkill):
                                             'phrase': search_phrase,
                                             'callback_data':
                                             best.get('callback_data')}))
-                self.answered = True
             else:
                 self.answered = False
             self.waiting = False
