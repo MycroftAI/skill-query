@@ -155,13 +155,13 @@ class QuestionsAnswersSkill(FallbackSkill):
                 self.waiting = False  # Jira MYC-1131
 
                 # invoke best match
-                self.speak(best['answer'], wait=True)
                 self.log.info('Handling with: ' + str(best['skill_id']))
                 self.bus.emit(message.forward('question:action',
                                       data={'skill_id': best['skill_id'],
                                             'phrase': search_phrase,
                                             'callback_data':
                                             best.get('callback_data')}))
+                self.speak(best['answer'], wait=True)
             else:
                 self.answered = False
             self.waiting = False
