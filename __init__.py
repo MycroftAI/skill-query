@@ -91,7 +91,7 @@ class QuestionsAnswersSkill(FallbackSkill):
             self.bus.emit(message.forward("question:query", data={"phrase": utt}))
 
             self.gui.show_page("SearchingForAnswers.qml")
-            self.speak_dialog("just.one.moment", wait=True)
+            self.speak_dialog("just.one.moment")
             self.searching_event.wait(timeout=6)
 
             if self.answer_message:
@@ -124,21 +124,27 @@ class QuestionsAnswersSkill(FallbackSkill):
                 return
 
             answer = message.data.get("answer")
-            skill_id = message.data["skill_id"]
 
             if answer:
-                self.cancel_scheduled_event("QuestionQueryTimeout")
-                self.log.info("Answer from %s: %s", skill_id, answer)
-                self.answer_message = message
-                self._answer_found()
+                skill_id = message.data["skill_id"]
+                conf = message.data["conf"]
+
+                if (not self.answer_message) or (
+                    conf > self.answer_message.data["conf"]
+                ):
+                    self.log.info("Answer from %s: %s", skill_id, answer)
+                    self.answer_message = message
 
     def _query_timeout(self, message):
         with self.lock:
             if not self.is_searching:
                 return
 
-            self.log.info("Search timeout")
-            self._stop_search()
+            if self.answer_message:
+                self._answer_found()
+            else:
+                self.log.info("Search timeout")
+                self._stop_search()
 
     def handle_query_action_complete(self, message):
         self.action_event.set()
