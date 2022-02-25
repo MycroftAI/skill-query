@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import threading
 import time
+import typing
 from mycroft.messagebus.message import Message
 from mycroft import FallbackSkill
-from threading import Lock
 
 
 EXTENSION_TIME = 10
@@ -24,31 +25,32 @@ EXTENSION_TIME = 10
 class QuestionsAnswersSkill(FallbackSkill):
     def __init__(self):
         super().__init__()
-        self.query_replies = {}     # cache of received replies
-        self.query_extensions = {}  # maintains query timeout extensions
-        self.lock = Lock()
-        self.waiting = True
-        self.answered = False
+        self.lock = threading.Lock()
+        self.is_searching = False
+        self.searching_event = threading.Event()
+        self.answer_message: typing.Optional[Message] = None
+        self.action_event = threading.Event()
 
     def initialize(self):
-        self.add_event('question:query.response',
-                       self.handle_query_response)
+        self.add_event("fallback-query.search", self.handle_query_search)
+        self.add_event("question:query.response", self.handle_query_response)
+        self.add_event("query:action-complete", self.handle_query_action_complete)
         self.register_fallback(self.handle_question, 5)
         self.qwords = [
-                'tell me ',
-                'answer ',
-                'where ',
-                'which ',
-                'what ',
-                'when ',
-                'does ',
-                'how ',
-                'why ',
-                'are ',
-                'who ',
-                'do ',
-                'is '
-                ]
+            "tell me ",
+            "answer ",
+            "where ",
+            "which ",
+            "what ",
+            "when ",
+            "does ",
+            "how ",
+            "why ",
+            "are ",
+            "who ",
+            "do ",
+            "is ",
+        ]
 
     def valid_question(self, utt):
         for word in self.qwords:
@@ -56,121 +58,105 @@ class QuestionsAnswersSkill(FallbackSkill):
                 return True
         return False
 
-    #@intent_handler(AdaptIntent().require('Question'))
+    # @intent_handler(AdaptIntent().require('Question'))
     def handle_question(self, message):
         """ Send the phrase to the CommonQuerySkills and prepare for handling
             the replies.
         """
-        self.waiting = True
-        self.answered = False
-        utt = message.data.get('utterance')
+        utt = message.data.get("utterance")
 
         if not self.valid_question(utt):
             return False
 
-        self.enclosure.mouth_think()
-        self.query_replies[utt] = []
-        self.query_extensions[utt] = []
-        self.log.info('Searching for {}'.format(utt))
-        # Send the query to anyone listening for them
-        self.bus.emit(message.forward('question:query', data={'phrase': utt}))
+        self.bus.emit(Message("fallback-query.search", data={"utterance": utt}))
 
-        self.timeout_time = time.time() + 1
-        self.schedule_event(self._query_timeout, 1,
-                            data={'phrase': utt},
-                            name='QuestionQueryTimeout')
+        return True
 
-        while True:
-            if not self.waiting or time.time() > self.timeout_time + 1:
-                break
+    def handle_query_search(self, message):
+        with self.activity():
+            utt = message.data.get("utterance")
 
-            time.sleep(1)
-        return self.answered
+            if self.is_searching:
+                self._stop_search()
+
+            self.log.info("Searching for %s", utt)
+            self._start_search()
+            self.schedule_event(
+                self._query_timeout,
+                5,
+                data={"phrase": utt},
+                name="QuestionQueryTimeout",
+            )
+
+            self.bus.emit(message.forward("question:query", data={"phrase": utt}))
+
+            self.gui.show_page("SearchingForAnswers.qml")
+            self.speak_dialog("just.one.moment", wait=True)
+            self.searching_event.wait(timeout=6)
+
+            if self.answer_message:
+                self.log.info("CQS action start")
+                self.action_event.clear()
+                self.bus.emit(
+                    message.forward(
+                        "question:action",
+                        data={
+                            "skill_id": self.answer_message.data["skill_id"],
+                            "phrase": utt,
+                            "callback_data": self.answer_message.data.get(
+                                "callback_data"
+                            ),
+                        },
+                    )
+                )
+                self.action_event.wait(timeout=60)
+                self.log.info("CQS action complete")
+            else:
+                self.speak_dialog("noAnswer", wait=True)
 
     def handle_query_response(self, message):
         with self.lock:
-            search_phrase = message.data['phrase']
-            skill_id = message.data['skill_id']
-            searching = message.data.get('searching')
-            answer = message.data.get('answer')
+            if not self.is_searching:
+                return
 
-            # Manage requests for time to complete searches
+            searching = message.data.get("searching")
             if searching:
-                # extend the timeout by 5 seconds
-                self.cancel_scheduled_event('QuestionQueryTimeout')
-                self.timeout_time = time.time() + EXTENSION_TIME
-                self.schedule_event(self._query_timeout,
-                                    EXTENSION_TIME,
-                                    data={'phrase': search_phrase},
-                                    name='QuestionQueryTimeout')
+                return
 
-                # TODO: Perhaps block multiple extensions?
-                if (search_phrase in self.query_extensions and
-                        skill_id not in self.query_extensions[search_phrase]):
-                    self.query_extensions[search_phrase].append(skill_id)
-            elif search_phrase in self.query_extensions:
-                # Search complete, don't wait on this skill any longer
-                if answer and search_phrase in self.query_replies:
-                    self.log.info('Answer from {}'.format(skill_id))
-                    self.query_replies[search_phrase].append(message.data)
-                # Remove the skill from list of extensions
-                if skill_id in self.query_extensions[search_phrase]:
-                    self.query_extensions[search_phrase].remove(skill_id)
-                    if not self.query_extensions[search_phrase]:
-                        self.cancel_scheduled_event('QuestionQueryTimeout')
-                        self.schedule_event(self._query_timeout, 1,
-                                            data={'phrase': search_phrase},
-                                            name='QuestionQueryTimeout')
-            else:
-                self.log.warning('{} Answered too slowly,'
-                                 'will be ignored.'.format(skill_id))
+            answer = message.data.get("answer")
+            skill_id = message.data["skill_id"]
+
+            if answer:
+                self.cancel_scheduled_event("QuestionQueryTimeout")
+                self.log.info("Answer from %s: %s", skill_id, answer)
+                self.answer_message = message
+                self._answer_found()
 
     def _query_timeout(self, message):
-        # Prevent any late-comers from retriggering this query handler
-        with self.lock, self.activity():
-            self.log.info('Timeout occured check responses')
-            search_phrase = message.data['phrase']
-            if search_phrase in self.query_extensions:
-                self.query_extensions[search_phrase] = []
-            self.enclosure.mouth_reset()
+        with self.lock:
+            if not self.is_searching:
+                return
 
-            # Look at any replies that arrived before the timeout
-            # Find response(s) with the highest confidence
-            best = None
-            ties = []
-            if search_phrase in self.query_replies:
-                for handler in self.query_replies[search_phrase]:
-                    if not best or handler['conf'] > best['conf']:
-                        best = handler
-                        ties = []
-                    elif handler['conf'] == best['conf']:
-                        ties.append(handler)
+            self.log.info("Search timeout")
+            self._stop_search()
 
-            if best:
-                if ties:
-                    # TODO: Ask user to pick between ties or do it automagically
-                    pass
+    def handle_query_action_complete(self, message):
+        self.action_event.set()
 
-                self.answered = True  # Jira MYC-1131
-                self.waiting = False  # Jira MYC-1131
+    def _start_search(self):
+        self.is_searching = True
+        self.answer_message = None
+        self.searching_event.clear()
 
-                # invoke best match
-                self.log.info('Handling with: ' + str(best['skill_id']))
-                self.bus.emit(message.forward('question:action',
-                                      data={'skill_id': best['skill_id'],
-                                            'phrase': search_phrase,
-                                            'callback_data':
-                                            best.get('callback_data')}))
-                self.speak(best['answer'], wait=True)
-            else:
-                self.answered = False
-            self.waiting = False
-            if search_phrase in self.query_replies:
-                del self.query_replies[search_phrase]
-            if search_phrase in self.query_extensions:
-                del self.query_extensions[search_phrase]
+    def _stop_search(self):
+        self.is_searching = False
+        self.answer_message = None
+        self.searching_event.set()
 
-        return self.answered
+    def _answer_found(self):
+        self.is_searching = False
+        self.searching_event.set()
+
 
 def create_skill():
     return QuestionsAnswersSkill()
