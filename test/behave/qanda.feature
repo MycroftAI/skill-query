@@ -30,7 +30,7 @@ Feature: Question and Answer functionality
 
   Examples: when questions
     | when did this happen | time |
-    | when was the last ice age | after the Medieval Warm Period |
+    | when was the second world war | 1945 |
     | when will the sun die | billion |
 
   Scenario Outline: user asks where something is
@@ -52,7 +52,7 @@ Feature: Question and Answer functionality
 
   Examples: what questions
     | how is this a thing | the answer |
-    | how tall is the eiffel tower | 1063 |
+    | how tall is the eiffel tower | 1083 |
     | how far away is the moon | distance |
     | how far is it from vienna to berlin | vienna |
 
