@@ -7,7 +7,7 @@ Feature: Question and Answer functionality
 
   Examples: who questions
     | who is a person | person |
-    | who is george church | church |
+    | who is grace hopper | hopper |
     | who are the foo fighters | foo |
     | who built the eiffel tower | sauvestre |
     | who wrote the book outliers | gladwell |
@@ -30,7 +30,7 @@ Feature: Question and Answer functionality
 
   Examples: when questions
     | when did this happen | time |
-    | when was the last ice age | after the Medieval Warm Period |
+    | when was the last ice age | ice age |
     | when will the sun die | billion |
 
   Scenario Outline: user asks where something is
@@ -52,7 +52,7 @@ Feature: Question and Answer functionality
 
   Examples: what questions
     | how is this a thing | the answer |
-    | how tall is the eiffel tower | 1063 |
+    | how tall is the eiffel tower | 1083 |
     | how far away is the moon | distance |
     | how far is it from vienna to berlin | vienna |
 
@@ -60,7 +60,7 @@ Feature: Question and Answer functionality
   Scenario Outline: user asks a question mycroft can't answer
     Given an english speaking user
      When the user says "<failing query>"
-     Then mycroft resply should contain "<expected answer>"
+     Then mycroft reply should contain "<expected answer>"
 
   Examples: what questions
     | failing query | expected answer |

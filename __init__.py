@@ -95,7 +95,7 @@ class QuestionsAnswersSkill(FallbackSkill):
             self.searching_event.wait(timeout=6)
 
             if self.answer_message:
-                self.log.info("CQS action start")
+                self.log.info("CQS action start (data=%s)", self.answer_message.data)
                 self.action_event.clear()
                 self.bus.emit(
                     message.forward(
@@ -132,7 +132,9 @@ class QuestionsAnswersSkill(FallbackSkill):
                 if (not self.answer_message) or (
                     conf > self.answer_message.data["conf"]
                 ):
-                    self.log.info("Answer from %s: %s", skill_id, answer)
+                    self.log.info(
+                        "Answer from %s: %s (confidence=%s)", skill_id, answer, conf
+                    )
                     self.answer_message = message
 
     def _query_timeout(self, message):
