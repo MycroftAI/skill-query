@@ -53,7 +53,7 @@ Feature: Question and Answer functionality
   Examples: what questions
     | how is this a thing | the answer |
     | how tall is the eiffel tower | 1083 |
-    | how far away is the moon | distance |
+    | what is the distance to the moon | distance |
     | how far is it from vienna to berlin | vienna |
 
   @xfail
