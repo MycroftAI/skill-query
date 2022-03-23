@@ -7,7 +7,7 @@ Feature: Question and Answer functionality
 
   Examples: who questions
     | who is a person | person |
-    | who is grace hopper | hopper |
+    | who is george church | church |
     | who are the foo fighters | foo |
     | who built the eiffel tower | sauvestre |
     | who wrote the book outliers | gladwell |
